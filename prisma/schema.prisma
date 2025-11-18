@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  profile   Profile?
+  posts     Post[]
+  comments  Comment[]
+  reactions Reaction[]
+  likes     Like[]
+  reposts   Repost[]
+  messages  Message[]
+  follows   Follow[] @relation("followers")
+  following Follow[] @relation("following")
+  blocks    Block[]  @relation("blocker")
+  blockedBy Block[]  @relation("blocked")
+  mutes     Mute[]   @relation("muter")
+  mutedBy   Mute[]   @relation("muted")
+  notifications Notification[]
+  reports   Report[] @relation("reporter")
+}
+
+model Profile {
+  id          String  @id @default(uuid())
+  user        User    @relation(fields: [userId], references: [id])
+  userId      String  @unique
+  displayName String
+  handle      String  @unique
+  bio         String?
+  avatarUrl   String?
+  lang        String?
+  isVerified  Boolean @default(false)
+}
+
+model Follow {
+  follower     User   @relation("followers", fields: [followerId], references: [id])
+  followerId   String
+  following    User   @relation("following", fields: [followingId], references: [id])
+  followingId  String
+  createdAt    DateTime @default(now())
+
+  @@id([followerId, followingId])
+}
+
+model Block {
+  blocker     User   @relation("blocker", fields: [blockerId], references: [id])
+  blockerId   String
+  blocked     User   @relation("blocked", fields: [blockedId], references: [id])
+  blockedId   String
+  createdAt   DateTime @default(now())
+
+  @@id([blockerId, blockedId])
+}
+
+model Mute {
+  muter     User   @relation("muter", fields: [muterId], references: [id])
+  muterId   String
+  muted     User   @relation("muted", fields: [mutedId], references: [id])
+  mutedId   String
+  createdAt DateTime @default(now())
+
+  @@id([muterId, mutedId])
+}
+
+model AudioAsset {
+  id            String   @id @default(uuid())
+  s3Key         String   @unique
+  mime          String
+  codec         String
+  durationSec   Float
+  sizeBytes     Int
+  hash          String?
+  waveformSmall Float[]
+  loudnessLUFS  Float
+  posts         Post?
+  comments      Comment?
+  reactions     Reaction?
+  messages      Message?
+  transcript    Transcript?
+}
+
+model Post {
+  id          String     @id @default(uuid())
+  author      User       @relation(fields: [authorId], references: [id])
+  authorId    String
+  audio       AudioAsset @relation(fields: [audioId], references: [id])
+  audioId     String
+  caption     String?
+  language    String?
+  visibility  String     @default("PUBLIC")
+  transcript  String?
+  createdAt   DateTime   @default(now())
+  comments    Comment[]
+  reactions   Reaction[]
+  likes       Like[]
+  reposts     Repost[]
+}
+
+model Comment {
+  id              String     @id @default(uuid())
+  post            Post       @relation(fields: [postId], references: [id])
+  postId          String
+  author          User       @relation(fields: [authorId], references: [id])
+  authorId        String
+  audio           AudioAsset @relation(fields: [audioId], references: [id])
+  audioId         String
+  parentComment   Comment?   @relation("CommentToComment", fields: [parentCommentId], references: [id])
+  parentCommentId String?
+  children        Comment[]  @relation("CommentToComment")
+  createdAt       DateTime   @default(now())
+}
+
+model Reaction {
+  id        String     @id @default(uuid())
+  post      Post       @relation(fields: [postId], references: [id])
+  postId    String
+  author    User       @relation(fields: [authorId], references: [id])
+  authorId  String
+  audio     AudioAsset @relation(fields: [audioId], references: [id])
+  audioId   String
+  type      String     @default("vibe")
+  createdAt DateTime   @default(now())
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Repost {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  createdAt DateTime @default(now())
+}
+
+model Conversation {
+  id           String             @id @default(uuid())
+  participants ConversationMember[]
+  messages     Message[]
+}
+
+model ConversationMember {
+  id             String        @id @default(uuid())
+  conversation   Conversation  @relation(fields: [conversationId], references: [id])
+  conversationId String
+  user           User          @relation(fields: [userId], references: [id])
+  userId         String
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String     @id @default(uuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+  author         User       @relation(fields: [authorId], references: [id])
+  authorId       String
+  audio          AudioAsset @relation(fields: [audioId], references: [id])
+  audioId        String
+  createdAt      DateTime   @default(now())
+}
+
+model Transcript {
+  id        String            @id @default(uuid())
+  audio     AudioAsset        @relation(fields: [audioId], references: [id])
+  audioId   String            @unique
+  segments  TranscriptSegment[]
+}
+
+model TranscriptSegment {
+  id           String     @id @default(uuid())
+  transcript   Transcript @relation(fields: [transcriptId], references: [id])
+  transcriptId String
+  startMs      Int
+  endMs        Int
+  text         String
+}
+
+model Report {
+  id         String   @id @default(uuid())
+  reporter   User     @relation("reporter", fields: [reporterId], references: [id])
+  reporterId String
+  targetType String
+  targetId   String
+  reason     String
+  createdAt  DateTime @default(now())
+  status     String   @default("pending")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+}

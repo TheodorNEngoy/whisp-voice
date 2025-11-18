@@ -1,0 +1,9 @@
+{
+  "extends": "./base.json",
+  "compilerOptions": {
+    "lib": ["es2023"],
+    "types": ["node"],
+    "module": "commonjs",
+    "moduleResolution": "node"
+  }
+}

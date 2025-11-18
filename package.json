@@ -1,0 +1,32 @@
+{
+  "name": "whisp",
+  "private": true,
+  "packageManager": "pnpm@8.15.1",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "prepare": "husky install",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "ts-node prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.30",
+    "@types/react": "18.2.61",
+    "@types/react-dom": "18.2.19",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.1.0",
+    "husky": "9.0.11",
+    "lint-staged": "15.2.2",
+    "prettier": "3.2.5",
+    "ts-node": "10.9.2",
+    "typescript": "5.4.5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,md,css}": "prettier --write"
+  }
+}
