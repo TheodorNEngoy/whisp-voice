@@ -1,0 +1,8 @@
+{
+  "name": "@whisp/config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "tsconfig/base.json",
+  "files": ["tsconfig", "eslint"],
+  "type": "module"
+}
